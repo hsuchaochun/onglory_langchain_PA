@@ -23,7 +23,7 @@ if not os.environ.get("LANGCHAIN_API_KEY"):
     os.environ["LANGCHAIN_API_KEY"] = getpass.getpass()
     os.environ["LANGCHAIN_TRACING_V2"] = "true"
 
-llm = ChatOpenAI(model="gpt-4o")
+llm = ChatOpenAI(model="gpt-3.5-turbo")
 db = SQLDatabase.from_uri(config.SQL_CONNECT_URL)
 # print(db.dialect)
 # print(db.get_usable_table_names())
@@ -60,5 +60,5 @@ chain = (
     | StrOutputParser()
 )
 
-result = chain.invoke({"question": "What's the bitcoin ETF netflow today?"})
+result = chain.invoke({"question": "Show me Onglory quant holding coins"})
 print(result)
