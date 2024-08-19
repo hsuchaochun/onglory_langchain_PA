@@ -43,7 +43,11 @@ write_query = create_sql_query_chain(llm, db)
 # print(result)
 
 answer_prompt = PromptTemplate.from_template(
-    """Given the following user question, corresponding SQL query, and SQL result, answer the user question.
+    """Given the following user question, corresponding SQL query, and SQL result.\
+        Answer the user question in Chinese(traditional), make the output be structured, might contain some tables or listed data.\
+        If the output data contains table, add sufficient tab to make the table looks good.\
+        Also, please make sure the answer is accurate, easy to understand, and answer the question properly without losing any data.\
+        The number should be rounded to 2 decimal places.\
 
 Question: {question}
 SQL Query: {query}
@@ -60,5 +64,5 @@ chain = (
     | StrOutputParser()
 )
 
-result = chain.invoke({"question": "Show me Onglory quant holding coins"})
+result = chain.invoke({"question": "Onglory investment overview"})
 print(result)
