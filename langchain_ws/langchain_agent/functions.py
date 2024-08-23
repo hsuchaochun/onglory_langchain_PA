@@ -1,5 +1,26 @@
 import markdown
 import pdfkit
+from langchain_openai import ChatOpenAI
+from langchain_community.utilities import SQLDatabase
+import os
+import sys
+sys.path.append("../")
+import config
+
+def set_env_vars():
+        os.environ["LANGCHAIN_API_KEY"] = config.LANGCHAIN_API_KEY
+        os.environ["OPENAI_API_KEY"] = config.OPENAI_API_KEY
+        os.environ["TAVILY_API_KEY"] = config.TAVILY_API_KEY
+
+def get_llm_model(model_name="gpt-4o", temp=0):
+    return ChatOpenAI(
+        openai_api_key=config.OPENAI_API_KEY,
+        model_name=model_name,
+        temperature=temp
+    )
+    
+def get_onglory_db():
+    return SQLDatabase.from_uri(config.SQL_CONNECT_URL)
 
 def preprocess_markdown_table(markdown_content):
     """Preprocess the markdown content to ensure it's in clean HTML format without unnecessary breaks."""

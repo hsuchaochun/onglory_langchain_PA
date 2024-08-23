@@ -20,16 +20,35 @@ class SQLTool:
         
         self.llm = self.get_llm_model()
         self.db = SQLDatabase.from_uri(config.SQL_CONNECT_URL)
+
+        # Column metadata
+        self.metadata = {
+            "onglory_overview": {
+                "columns": {
+                    "investment_id": "The unique identifier for each investment",
+                    "investment_name": "The name of the investment project",
+                    "netflow": "Net cash flow for the investment",
+                    "investment_date": "The date when the investment was made",
+                    "roi": "Return on investment in percentage"
+                },
+                "description": "Contains an overview of all Onglory investments."
+            },
+            # Add metadata for other tables as needed
+        }
         
         self.write_query = create_sql_query_chain(self.llm, self.db)
         self.execute_query = QuerySQLDataBaseTool(db=self.db)
         
         self.answer_prompt = PromptTemplate.from_template(
-            """Given the following user question, corresponding SQL query, and SQL result.\
-            Answer the user question in Chinese(traditional), make the output be structured, might contain some tables or listed data.\
-            If the output data contains table, add sufficient tab to make the table look good.\
-            Also, please make sure the answer is accurate, easy to understand, and answer the question properly without losing any data.\
-            The number should be rounded to 2 decimal places.\
+            """You are an expert SQL analyst with knowledge of the database schema. Use the following metadata to guide your understanding of the data. \
+            Make sure that your answers are precise, well-structured, and accurate.
+
+            Metadata:
+            Table: {table}
+            Description: {description}
+            Columns: {columns}
+
+            Now, answer the following user question in Chinese(traditional), making the output structured and using tables where necessary. Ensure the output is easy to understand and answers the question accurately:
 
             Question: {question}
             SQL Query: {query}
@@ -58,8 +77,22 @@ class SQLTool:
             temperature=0
         )
     
-    def execute_user_query(self, question):
-        return self.chain.invoke({"question": question})
+    def execute_user_query(self, question, table):
+        # Fetch the metadata for the specified table
+        table_metadata = self.metadata.get(table, {})
+        if not table_metadata:
+            raise ValueError(f"No metadata available for table {table}")
+
+        # Pass metadata into the prompt context
+        result = self.chain.invoke({
+            "question": question,
+            "table": table,
+            "description": table_metadata.get("description", "No description available."),
+            "columns": table_metadata.get("columns", {}),
+            "query": "",  # This will be filled by the chain
+            "result": ""  # This will be filled after the query execution
+        })
+        return result
 
     def as_tool(self):
         # This method returns a callable object that the agent can use as a tool
