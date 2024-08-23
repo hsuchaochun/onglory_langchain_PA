@@ -19,13 +19,16 @@ def authenticate_to_google(scopes):
 def setup_gmail_watch(service):
     request_body = {
         'labelIds': ['INBOX'],
-        'topicName': 'projects/{your-project-id}/topics/gmail-notifications'
+        'topicName': 'projects/onglory-langchain/topics/gmail2drive'
     }
     response = service.users().watch(userId='me', body=request_body).execute()
     print(f"Push notification setup: {response}")
 
 def main():
-    SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
+    SCOPES = [
+        'https://www.googleapis.com/auth/gmail.readonly',
+        'https://www.googleapis.com/auth/pubsub'
+    ]
     service = authenticate_to_google(SCOPES)
     setup_gmail_watch(service)
 

@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "server"
+name = "google_server"
 version = "0.1.0"
 description = ""
 authors = ["hsuchaochun <leohsu210200@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.11"
 flask = "^3.0.3"
 google-api-python-client = "^2.142.0"
 google-auth-oauthlib = "^1.2.1"
