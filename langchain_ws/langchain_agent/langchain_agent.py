@@ -8,20 +8,6 @@ from langchain_core.prompts import ChatPromptTemplate
 from self_defined_tool import Gojo_satoru, SQLTool
 from tools import SqlSearchTool
 from functions import generate_pdf_from_markdown, get_llm_model
-import sys
-sys.path.append("../")
-import config
-
-OPENAI_API_KEY = config.OPENAI_API_KEY
-
-# Create an instance of SqlSearchTool
-sql_tool_instance = SqlSearchTool()
-
-# Call as_tool() on the instance
-sql_tool = sql_tool_instance.as_tool()
-
-# Add the tool to the tools list
-tools = [sql_tool]
 
 prompt = ChatPromptTemplate.from_messages(
     [
