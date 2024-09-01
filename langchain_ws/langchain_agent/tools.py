@@ -12,7 +12,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from functions import set_env_vars, get_llm_model, get_onglory_db
-from metadata import onglory_overview_metadata, onglory_portfolio_metadata, onglory_quant_status_metadata, onglory_crypto_quant_indicator_status_metadata, onglory_trading_history_metadata, onglory_value_history_metadata, whale_trace_metadata, bitcoinETF_history_metadata, bitcoinETF_netflow_metadata
+from metadata import onglory_overview_metadata, onglory_portfolio_metadata, onglory_quant_status_metadata, onglory_crypto_quant_indicator_status_metadata, onglory_trading_history_metadata, onglory_value_history_metadata, whale_trace_metadata, bitcoinETF_history_metadata, bitcoinETF_netflow_metadata, news_metadata
 
 class SqlSearchInput(BaseModel):
     query: str = Field(description="The question that was asked by the user.")
@@ -32,6 +32,7 @@ class SqlSearchTool(BaseTool):
         "onglory_whale_trace": whale_trace_metadata,
         "bitcoinETF_history": bitcoinETF_history_metadata,
         "bitcoinETF_netflow": bitcoinETF_netflow_metadata,
+        "news": news_metadata,
     }
     
     def _run(

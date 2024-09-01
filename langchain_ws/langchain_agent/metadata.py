@@ -613,3 +613,37 @@ bitcoinETF_netflow_metadata = {
         }
     }
 }
+
+news_metadata = {
+    "description": "This dataset contains news articles with details such as title, content summary, image links, URLs, and publication timestamps.",
+    "columns": {
+        "id": {
+            "description": "The unique identifier for each news article.",
+            "type": "integer"
+        },
+        "title": {
+            "description": "The title of the news article.",
+            "type": "string"
+        },
+        "content": {
+            "description": "A brief summary or snippet of the news content.",
+            "type": "string"
+        },
+        "pic": {
+            "description": "The URL link to the image associated with the news article.",
+            "type": "string"
+        },
+        "link": {
+            "description": "The URL link to the full news article on the source website.",
+            "type": "string"
+        },
+        "url": {
+            "description": "The URL link to the related social media or external content (e.g., Twitter, LinkedIn).",
+            "type": "string"
+        },
+        "create_time": {
+            "description": "The timestamp when the news article was created or published.",
+            "type": "timestamp"
+        }
+    }
+}
