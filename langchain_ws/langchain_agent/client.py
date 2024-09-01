@@ -1,11 +1,21 @@
 import requests
+import sys
 
 url = "http://localhost:8000/execute_chain/"
 
+# Check if the user has provided the input argument
+if len(sys.argv) < 2:
+    print("Usage: python3 xxx.py 'input'")
+    sys.exit(1)
+
+# Get the input from the command line argument
+user_input = sys.argv[1]
+
 # The input you want to send to the agent
 data = {
-    "input": "onglory last 5 days's net value"
+    "input": user_input
 }
+
 
 # Send the POST request to the server
 response = requests.post(url, json=data)
