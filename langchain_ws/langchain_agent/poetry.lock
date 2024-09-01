@@ -1281,6 +1281,30 @@ files = [
 ]
 
 [[package]]
+name = "mysql"
+version = "0.0.3"
+description = "Virtual package for MySQL-python"
+optional = false
+python-versions = "*"
+files = [
+    {file = "mysql-0.0.3-py3-none-any.whl", hash = "sha256:8893cb143a5ac525c49ef358a23b8a0dc9721a95646f7bab6ca2f384c18a6a9a"},
+    {file = "mysql-0.0.3.tar.gz", hash = "sha256:fd7bae7d7301ce7cd3932e5ff7f77bbc8e34872108252866e08d16d6b8e8de8c"},
+]
+
+[package.dependencies]
+mysqlclient = "*"
+
+[[package]]
+name = "mysql-connector"
+version = "2.2.9"
+description = "MySQL driver written in Python"
+optional = false
+python-versions = "*"
+files = [
+    {file = "mysql-connector-2.2.9.tar.gz", hash = "sha256:1733e6ce52a049243de3264f1fbc22a852cb35458c4ad739ba88189285efdf32"},
+]
+
+[[package]]
 name = "mysqlclient"
 version = "2.2.4"
 description = "Python interface to MySQL"
@@ -2571,4 +2595,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "8899c7bfcf6c5cfcb1ef564b01d4c69ba493177d8c2abd38a03775e2f5f2efaf"
+content-hash = "4878f187bd318b13574bfef486e4c4dfbaecf7ab28bb6f9124e02f4a5b75a6c8"
