@@ -27,7 +27,7 @@ while True:
     
     try:
         response = requests.get(url)
-        print(response.json())
+        # print(response.json())
         response.raise_for_status()  # Check if the request was successful
         
         if response.json().get("status") != 0:
@@ -57,6 +57,7 @@ while True:
             onglory_cursor.execute(sql, val)
             result = onglory_cursor.fetchall()
             if len(result) == 0:
+                print(f"News ID: {id}, Title: {title}, Create Time: {create_time_str}")
                 # Insert the news
                 sql = "INSERT INTO news (id, title, content, pic, link, url, create_time) VALUES (%s, %s, %s, %s, %s, %s, %s)"
                 val = (id, title, content, pic, link, url, create_time_str)
@@ -65,7 +66,6 @@ while True:
                 print(f"News {id} inserted.")
             else:
                 print(f"News {id} exists.")
-                break
 
     except requests.exceptions.RequestException as e:
         print(f"Request failed: {e}")
