@@ -61,9 +61,13 @@ while True:
                 # Insert the news
                 sql = "INSERT INTO news (id, title, content, pic, link, url, create_time) VALUES (%s, %s, %s, %s, %s, %s, %s)"
                 val = (id, title, content, pic, link, url, create_time_str)
-                onglory_cursor.execute(sql, val)
-                onglory_db.commit()
-                print(f"News {id} inserted.")
+                try:
+                    onglory_cursor.execute(sql, val)
+                    onglory_db.commit()
+                    print(f"News {id} inserted.")
+                except onglory_db.Error as e:
+                    print(f"Insert failed: {e}")
+                    continue
             else:
                 print(f"News {id} exists.")
 
