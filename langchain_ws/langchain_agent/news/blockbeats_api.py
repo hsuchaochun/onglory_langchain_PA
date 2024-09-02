@@ -7,8 +7,8 @@
 # "lang":cn //language cn,en,cht
 
 import requests
-import datetime
 import time
+from datetime import datetime
 import sys
 sys.path.append("../../")
 import init
@@ -65,7 +65,7 @@ while True:
                 url = news.get("url")
             if news.get("create_time"):
                 create_time = news.get("create_time")
-                create_time_str = datetime.datetime.fromtimestamp(int(create_time)).strftime('%Y-%m-%d %H:%M:%S')
+                create_time_str = datetime.fromtimestamp(int(create_time)).strftime('%Y-%m-%d %H:%M:%S')
 
             # Check if the news exists
             sql = "SELECT * FROM news WHERE id = %s"
@@ -81,7 +81,7 @@ while True:
                     onglory_cursor.execute(sql, val)
                     onglory_db.commit()
                     # print(f"News {id} inserted.")
-                except onglory_db.Error as e:
+                except Exception as e:
                     print(f"Insert failed: {e}")
                     continue
             # else:
