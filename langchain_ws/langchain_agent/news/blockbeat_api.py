@@ -41,15 +41,31 @@ while True:
             continue  # Skip this iteration and wait for the next one
 
         for news in data:
-            id = news.get("id")
-            title = news.get("title")
-            content = news.get("content")
-            content = content.replace("<p>", "").replace("</p>", "").replace("<br>", "").replace("</br>", "")
-            pic = news.get("pic")
-            link = news.get("link")
-            url = news.get("url")
-            create_time = news.get("create_time")
-            create_time_str = datetime.datetime.fromtimestamp(int(create_time)).strftime('%Y-%m-%d %H:%M:%S')
+            platform = "blockbeats"
+            id = ""
+            title = ""
+            content = ""
+            pic = ""
+            link = ""
+            url = ""
+            create_time_str = ""
+            
+            if news.get("id"):
+                id = news.get("id")
+            if news.get("title"):
+                title = news.get("title")
+            if news.get("content"):
+                content = news.get("content")
+                content = content.replace("<p>", "").replace("</p>", "").replace("<br>", "").replace("</br>", "")
+            if news.get("pic"):
+                pic = news.get("pic")
+            if news.get("link"):
+                link = news.get("link")
+            if news.get("url"):
+                url = news.get("url")
+            if news.get("create_time"):
+                create_time = news.get("create_time")
+                create_time_str = datetime.datetime.fromtimestamp(int(create_time)).strftime('%Y-%m-%d %H:%M:%S')
 
             # Check if the news exists
             sql = "SELECT * FROM news WHERE id = %s"
@@ -59,8 +75,8 @@ while True:
             if len(result) == 0:
                 print(f"News ID: {id}, Title: {title}, Create Time: {create_time_str}")
                 # Insert the news
-                sql = "INSERT INTO news (id, title, content, pic, link, url, create_time) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-                val = (id, title, content, pic, link, url, create_time_str)
+                sql = "INSERT INTO news (platform, id, title, content, pic, link, url, create_time) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+                val = (platform, id, title, content, pic, link, url, create_time_str)
                 try:
                     onglory_cursor.execute(sql, val)
                     onglory_db.commit()
