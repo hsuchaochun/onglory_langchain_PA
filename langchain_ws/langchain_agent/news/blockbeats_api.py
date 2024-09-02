@@ -18,7 +18,7 @@ onglory_cursor = init.mycursor
 
 while True:
     page = 1
-    size = 10
+    size = sys.argv[1] if len(sys.argv) > 1 else 10
     type = "" # 'push': important news
     # lang = "cht" # 'cn': Chinese, 'en': English, 'cht': Traditional Chinese
     domain = "https://api.theblockbeats.news/v1/"
@@ -80,12 +80,12 @@ while True:
                 try:
                     onglory_cursor.execute(sql, val)
                     onglory_db.commit()
-                    print(f"News {id} inserted.")
+                    # print(f"News {id} inserted.")
                 except onglory_db.Error as e:
                     print(f"Insert failed: {e}")
                     continue
-            else:
-                print(f"News {id} exists.")
+            # else:
+            #     print(f"News {id} exists.")
 
     except requests.exceptions.RequestException as e:
         print(f"Request failed: {e}")
