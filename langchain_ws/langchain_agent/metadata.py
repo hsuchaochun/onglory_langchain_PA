@@ -615,7 +615,7 @@ bitcoinETF_netflow_metadata = {
 }
 
 news_metadata = {
-    "description": "This dataset contains news articles with details such as title, content summary, image links, URLs, and publication timestamps.",
+    "description": "This dataset contains news articles related to cryptocurrencies, including details such as title, content summary, related coins, and platform information.",
     "columns": {
         "id": {
             "description": "The unique identifier for each news article.",
@@ -623,6 +623,18 @@ news_metadata = {
         },
         "title": {
             "description": "The title of the news article.",
+            "type": "string"
+        },
+        "platform": {
+            "description": "The platform or source where the news was published (e.g., cryptopanic, blockbeats).",
+            "type": "string"
+        },
+        "related_coins": {
+            "description": "The name of the cryptocurrencies related to the news article (e.g., Bitcoin, Ethereum, Solana).",
+            "type": "string"
+        },
+        "related_coins_symbol": {
+            "description": "The symbol of the related cryptocurrencies (e.g., BTC, ETH, SOL).",
             "type": "string"
         },
         "content": {
