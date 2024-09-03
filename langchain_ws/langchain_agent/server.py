@@ -1,21 +1,25 @@
-from typing import Dict
 from fastapi import FastAPI, HTTPException, Request
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from langchain_openai import ChatOpenAI
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from tools import SqlSearchTool
+from tools import gmail_toolkit
 from functions import get_llm_model
 
-# Create FastAPI app
+# Initialize the FastAPI app
 app = FastAPI(
     title="LangChain Server",
     version="1.0",
     description="A simple API server using LangChain",
 )
 
-# Initialize the tools and prompt
-tools = [SqlSearchTool().as_tool()]
+# Initialize the SQL tool
+sql_tool = SqlSearchTool().as_tool()
+# Initialize the Gmail toolkit
+gmail_tools = gmail_toolkit.get_tools()
+# Combine the tools
+tools = [sql_tool] + gmail_tools
+
+llm = get_llm_model()
 
 prompt = ChatPromptTemplate.from_messages(
     [
@@ -27,19 +31,16 @@ prompt = ChatPromptTemplate.from_messages(
     ]
 )
 
-# Initialize LLM and create the agent
-llm = get_llm_model()
-
 # Create the agent
 agent = create_tool_calling_agent(llm, tools, prompt)
 
 # Create the agent executor
-agent_executer = AgentExecutor(
+agent_executor = AgentExecutor(
     agent=agent,
     tools=tools,
     verbose=True,
-    max_iterations=5,  # Increase this to allow more iterations
-    max_execution_time=150  # Increase the time limit if necessary
+    max_iterations=10,  # Increase this to allow more iterations
+    max_execution_time=300  # Increase the time limit if necessary
 )
 
 # Define the chain execution route
@@ -63,7 +64,7 @@ async def execute_chain(request: Request):
         }
 
         # Run the agent executor
-        result = await agent_executer.ainvoke(chain_input)
+        result = await agent_executor.ainvoke(chain_input)
 
         return {"result": result}
 

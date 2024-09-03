@@ -11,8 +11,22 @@ from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
+from langchain_google_community import GmailToolkit
+from langchain_google_community.gmail.utils import (
+    build_resource_service,
+    get_gmail_credentials,
+)
 from functions import set_env_vars, get_llm_model, get_onglory_db
 from metadata import onglory_overview_metadata, onglory_portfolio_metadata, onglory_quant_status_metadata, onglory_crypto_quant_indicator_status_metadata, onglory_trading_history_metadata, onglory_value_history_metadata, whale_trace_metadata, bitcoinETF_history_metadata, bitcoinETF_netflow_metadata, news_metadata
+
+# gmail toolkit
+credentials = get_gmail_credentials(
+    token_file="token.json",
+    scopes=["https://mail.google.com/"],
+    client_secrets_file="credentials.json",
+)
+api_resource = build_resource_service(credentials=credentials)
+gmail_toolkit = GmailToolkit(api_resource=api_resource)
 
 class SqlSearchInput(BaseModel):
     query: str = Field(description="The question that was asked by the user.")
