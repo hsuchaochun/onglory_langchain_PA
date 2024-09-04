@@ -1,7 +1,8 @@
 import requests
 import sys
 
-url = "http://localhost:8000/execute_chain/"
+url = "https://4bc7-185-213-82-87.ngrok-free.app/execute_chain/"
+# url = "http://localhost:8000/chain/"
 
 # Check if the user has provided the input argument
 if len(sys.argv) < 2:

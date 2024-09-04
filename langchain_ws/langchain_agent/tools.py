@@ -77,13 +77,14 @@ class SqlSearchTool(BaseTool):
         
         # Initialize environment variables, LLM, and database connection
         set_env_vars()  # Assuming this is a method that sets your environment variables
-        llm = get_llm_model(model_name="gpt-3.5-turbo")  # Initialize the LLM model
+        llm_query = get_llm_model(model_name="gpt-3.5-turbo")  # Initialize the LLM model
+        llm = get_llm_model()
         db = get_onglory_db()  # Connect to the Onglory database
         
         print('input:', input)
         
         # Create SQL chain and prompt template
-        write_query = create_sql_query_chain(llm, db)
+        write_query = create_sql_query_chain(llm_query, db)
         execute_query = QuerySQLDataBaseTool(db=db)
     
         answer_prompt = PromptTemplate.from_template(
@@ -123,13 +124,14 @@ class SqlSearchTool(BaseTool):
         """Use the tool to search the SQL database asynchronously."""
         # Initialize environment variables, LLM, and database connection
         set_env_vars()
-        llm = get_llm_model(model_name="gpt-3.5-turbo")
+        llm_query = get_llm_model(model_name="gpt-3.5-turbo")
+        llm = get_llm_model()
         db = get_onglory_db()
         
         print('input:', input)
 
         # Create SQL chain and prompt template
-        write_query = create_sql_query_chain(llm, db)
+        write_query = create_sql_query_chain(llm_query, db)
         execute_query = QuerySQLDataBaseTool(db=db)
     
         answer_prompt = PromptTemplate.from_template(
