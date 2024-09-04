@@ -1,29 +1,34 @@
 import requests
 import sys
+import argparse
+import json
+from typing import Dict, Any
 
-url = "https://4bc7-185-213-82-87.ngrok-free.app/execute_chain/"
-# url = "http://localhost:8000/chain/"
+def parse_arguments() -> str:
+    parser = argparse.ArgumentParser(description="Send input to LangChain server")
+    parser.add_argument('input', type=str, help='Input to send to the server')
+    args = parser.parse_args()
+    return args.input
 
-# Check if the user has provided the input argument
-if len(sys.argv) < 2:
-    print("Usage: python3 xxx.py 'input'")
-    sys.exit(1)
+def send_request(url: str, data: Dict[str, Any]) -> Dict[str, Any]:
+    try:
+        response = requests.post(url, json=data)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error sending request: {e}")
+        sys.exit(1)
 
-# Get the input from the command line argument
-user_input = sys.argv[1]
+def main():
+    url = "https://4bc7-185-213-82-87.ngrok-free.app/execute_chain/"
+    # url = "http://localhost:8000/chain/"
 
-# The input you want to send to the agent
-data = {
-    "input": user_input
-}
+    user_input = parse_arguments()
+    data = {"input": user_input}
 
+    result = send_request(url, data)
+    
+    print("Result:", json.dumps(result["result"], indent=2, ensure_ascii=False))
 
-# Send the POST request to the server
-response = requests.post(url, json=data)
-
-# Check for a successful response
-if response.status_code == 200:
-    result = response.json()
-    print("Result:", result["result"])
-else:
-    print(f"Error: {response.status_code}, {response.text}")
+if __name__ == "__main__":
+    main()

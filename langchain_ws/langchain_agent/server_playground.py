@@ -21,38 +21,39 @@ app = FastAPI(
     description="A custom playground for LangChain",
 )
 
-# Allow CORS (if you are testing on different domains)
+# Allow CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Update this with your domain
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 1. Initialize tools
+# Initialize tools
 sql_tool = SqlSearchTool().as_tool()
 gmail_tools = gmail_toolkit.get_tools()
 tools = [sql_tool] + gmail_tools
 
-# 2. Create prompt template
-prompt = ChatPromptTemplate.from_messages(
-    [
-        ("system", "You are an assistant whose only job is to forward user input directly to the tool without processing or interpreting the input. Do not attempt to answer or modify the input. Always pass the user's input directly to the tool."),
-        ("placeholder", "{chat_history}"),
-        ("human", "{input}"),
-        ("assistant", "Forwarding the input to the tool."),
-        ("placeholder", "{agent_scratchpad}"),
-    ]
-)
+# Create prompt template
+system_message = ("You are an assistant whose only job is to forward user input "
+                  "directly to the tool without processing or interpreting the input. "
+                  "Do not attempt to answer or modify the input. Always pass the "
+                  "user's input directly to the tool.")
 
-# 3. Create model
+prompt = ChatPromptTemplate.from_messages([
+    ("system", system_message),
+    ("placeholder", "{chat_history}"),
+    ("human", "{input}"),
+    ("assistant", "Forwarding the input to the tool."),
+    ("placeholder", "{agent_scratchpad}"),
+])
+
+# Create model and agent
 model = get_llm_model()
-
-# 4. Create agent
 agent = create_tool_calling_agent(model, tools, prompt)
 
-# 5. Create agent executor
+# Create agent executor
 agent_executor = AgentExecutor(
     agent=agent,
     tools=tools,
@@ -67,7 +68,7 @@ class InputSchema(BaseModel):
     chat_history: List[str] = []
     agent_scratchpad: List[str] = []
 
-# 6. Create a Runnable
+# Create a Runnable
 class MyChainRunnable(Runnable):
     def input_schema(self):
         return InputSchema
@@ -82,18 +83,18 @@ class MyChainRunnable(Runnable):
 
 my_chain_runnable = MyChainRunnable()
 
-# 7. Serve the HTML template
+# Serve the HTML template
 @app.get("/", response_class=HTMLResponse)
 async def get_playground(request: Request):
     return templates.TemplateResponse("playground.html", {"request": request})
 
-# 8. Endpoint for executing the chain
+# Endpoint for executing the chain
 @app.post("/execute_chain/")
 async def execute_chain(input_data: InputSchema):
     result = my_chain_runnable.invoke(input_data)
     return {"result": result}
 
-# 9. Add chain route (optional, if you want another way to call the chain)
+# Add chain route
 add_routes(app, my_chain_runnable, path="/chain")
 
 if __name__ == "__main__":

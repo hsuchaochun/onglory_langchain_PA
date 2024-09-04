@@ -3,8 +3,8 @@ from pydantic import BaseModel, Field
 from operator import itemgetter
 from langchain.tools import BaseTool
 from langchain.callbacks.manager import (
-    CallbackManagerForToolRun, 
-    AsyncCallbackManagerForToolRun, 
+    CallbackManagerForToolRun,
+    AsyncCallbackManagerForToolRun,
 )
 from langchain.chains import create_sql_query_chain
 from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
@@ -17,9 +17,20 @@ from langchain_google_community.gmail.utils import (
     get_gmail_credentials,
 )
 from functions import set_env_vars, get_llm_model, get_onglory_db
-from metadata import onglory_overview_metadata, onglory_portfolio_metadata, onglory_quant_status_metadata, onglory_crypto_quant_indicator_status_metadata, onglory_trading_history_metadata, onglory_value_history_metadata, whale_trace_metadata, bitcoinETF_history_metadata, bitcoinETF_netflow_metadata, news_metadata
+from metadata import (
+    onglory_overview_metadata,
+    onglory_portfolio_metadata,
+    onglory_quant_status_metadata,
+    onglory_crypto_quant_indicator_status_metadata,
+    onglory_trading_history_metadata,
+    onglory_value_history_metadata,
+    whale_trace_metadata,
+    bitcoinETF_history_metadata,
+    bitcoinETF_netflow_metadata,
+    news_metadata,
+)
 
-# gmail toolkit
+# Gmail toolkit setup
 credentials = get_gmail_credentials(
     token_file="token.json",
     scopes=["https://mail.google.com/"],
@@ -74,12 +85,11 @@ class SqlSearchTool(BaseTool):
         self, input: str, run_manager: Optional[CallbackManagerForToolRun] = None
     ) -> str:
         """Use the tool to search the SQL database."""
-        
         # Initialize environment variables, LLM, and database connection
-        set_env_vars()  # Assuming this is a method that sets your environment variables
-        llm_query = get_llm_model(model_name="gpt-3.5-turbo")  # Initialize the LLM model
+        set_env_vars()
+        llm_query = get_llm_model(model_name="gpt-3.5-turbo")
         llm = get_llm_model()
-        db = get_onglory_db()  # Connect to the Onglory database
+        db = get_onglory_db()
         
         print('input:', input)
         
@@ -88,11 +98,11 @@ class SqlSearchTool(BaseTool):
         execute_query = QuerySQLDataBaseTool(db=db)
     
         answer_prompt = PromptTemplate.from_template(
-            """Given the following user question, corresponding SQL query, and SQL result.\
-                Answer the user question in Chinese(traditional), make the output be structured, might contain some tables or listed data.\
-                If the output data contains table, add sufficient tab to make the table looks good.\
-                Also, please make sure the answer is accurate, easy to understand, and answer the question properly without losing any data.\
-                The number should be rounded to 2 decimal places.\
+            """Given the following user question, corresponding SQL query, and SQL result.
+            Answer the user question in Chinese(traditional), make the output be structured, might contain some tables or listed data.
+            If the output data contains table, add sufficient tab to make the table looks good.
+            Also, please make sure the answer is accurate, easy to understand, and answer the question properly without losing any data.
+            The number should be rounded to 2 decimal places.
 
             Question: {question}
             SQL Query: {query}
@@ -100,7 +110,7 @@ class SqlSearchTool(BaseTool):
             Answer: """
         )
 
-        # Chain execution in an async manner
+        # Chain execution
         chain = (
             RunnablePassthrough.assign(query=write_query).assign(
                 result=itemgetter("query") | execute_query
@@ -113,7 +123,7 @@ class SqlSearchTool(BaseTool):
         result = chain.invoke({
             "input": input,
             "question": input,
-            "database_metadata": self.database_metadata,  # Include database metadata
+            "database_metadata": self.database_metadata,
         })
         
         return result
@@ -135,11 +145,11 @@ class SqlSearchTool(BaseTool):
         execute_query = QuerySQLDataBaseTool(db=db)
     
         answer_prompt = PromptTemplate.from_template(
-            """Given the following user question, corresponding SQL query, and SQL result.\
-                Answer the user question in Chinese(traditional), make the output be structured, might contain some tables or listed data.\
-                If the output data contains table, add sufficient tab to make the table looks good.\
-                Also, please make sure the answer is accurate, easy to understand, and answer the question properly without losing any data.\
-                The number should be rounded to 2 decimal places.\
+            """Given the following user question, corresponding SQL query, and SQL result.
+            Answer the user question in Chinese(traditional), make the output be structured, might contain some tables or listed data.
+            If the output data contains table, add sufficient tab to make the table looks good.
+            Also, please make sure the answer is accurate, easy to understand, and answer the question properly without losing any data.
+            The number should be rounded to 2 decimal places.
 
             Question: {question}
             SQL Query: {query}
@@ -164,7 +174,8 @@ class SqlSearchTool(BaseTool):
         })
         
         return result
-    
+
+# Uncomment for testing
 # search = SqlSearchTool()
 # print(search.name)
 # print(search.description)
