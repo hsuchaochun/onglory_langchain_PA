@@ -33,7 +33,28 @@ class SqlSearchInput(BaseModel):
 
 class SqlSearchTool(BaseTool):
     name = "sql_search_tool"
-    description = "This is a tool to search the SQL database."
+    description = """
+    This tool is designed to search the SQL database and retrieve structured data based on a user's question.
+    The tool accepts a user question as input, converts it into an appropriate SQL query, and retrieves the corresponding data from the database.
+    
+    The output of this tool is structured in Chinese (traditional) and may include tables, lists, or detailed numerical data. It ensures that the result is accurate, easy to understand, and formatted properly for readability.
+    
+    Specific details:
+    - The number values are rounded to 2 decimal places.
+    - If tables are included in the response, they will be properly formatted with sufficient spacing to enhance clarity.
+    - The tool is capable of querying various databases, including:
+        - Onglory Overview
+        - Onglory Portfolio
+        - Quantitative Status
+        - Crypto Quant Indicator Status
+        - Trading History
+        - Value History
+        - Whale Tracking
+        - Bitcoin ETF History and Netflow
+        - News Data
+    
+    The tool automatically selects the relevant metadata from the appropriate database to generate the SQL query, ensuring the output answers the user's question accurately.
+    """
     arg_schema: Type[BaseModel] = SqlSearchInput
     
     database_metadata = {
@@ -59,22 +80,26 @@ class SqlSearchTool(BaseTool):
         llm = get_llm_model(model_name="gpt-3.5-turbo")  # Initialize the LLM model
         db = get_onglory_db()  # Connect to the Onglory database
         
+        print('input:', input)
+        
         # Create SQL chain and prompt template
         write_query = create_sql_query_chain(llm, db)
         execute_query = QuerySQLDataBaseTool(db=db)
     
         answer_prompt = PromptTemplate.from_template(
-            """
-            Given the following user question and table metadata, generate an SQL query.
+            """Given the following user question, corresponding SQL query, and SQL result.\
+                Answer the user question in Chinese(traditional), make the output be structured, might contain some tables or listed data.\
+                If the output data contains table, add sufficient tab to make the table looks good.\
+                Also, please make sure the answer is accurate, easy to understand, and answer the question properly without losing any data.\
+                The number should be rounded to 2 decimal places.\
 
-            Question: {input}
-            Table Metadata: {database_metadata}
+            Question: {question}
             SQL Query: {query}
             SQL Result: {result}
-            Answer: 
-            """
+            Answer: """
         )
 
+        # Chain execution in an async manner
         chain = (
             RunnablePassthrough.assign(query=write_query).assign(
                 result=itemgetter("query") | execute_query
@@ -86,6 +111,7 @@ class SqlSearchTool(BaseTool):
         
         result = chain.invoke({
             "input": input,
+            "question": input,
             "database_metadata": self.database_metadata,  # Include database metadata
         })
         
