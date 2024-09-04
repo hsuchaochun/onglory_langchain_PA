@@ -1,94 +1,78 @@
-# end point: open-api/open-flash?size={size}&page={page}&type={type}
-
-# Query parameters:
-# "page":1,  //page
-# "size":10, //size
-# "type":push //important news
-# "lang":cn //language cn,en,cht
-
 import requests
 import time
 from datetime import datetime
 import sys
+import logging
+from typing import Dict, Any, List
 sys.path.append("../../")
 import init
 
-onglory_db = init.mydb
-onglory_cursor = init.mycursor
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-while True:
-    page = 1
-    size = sys.argv[1] if len(sys.argv) > 1 else 10
-    type = "" # 'push': important news
-    # lang = "cht" # 'cn': Chinese, 'en': English, 'cht': Traditional Chinese
-    domain = "https://api.theblockbeats.news/v1/"
-    endpoint = "open-api/open-flash?size={size}&page={page}&type={type}"
-    url = domain + endpoint.format(size=size, page=page, type=type)
-    
-    try:
-        response = requests.get(url)
-        # print(response.json())
-        response.raise_for_status()  # Check if the request was successful
-        
-        if response.json().get("status") != 0:
-            print(f"Error: {response.get('msg')}")
-            continue
-        
+class BlockBeatsAPI:
+    def __init__(self):
+        self.db = init.mydb
+        self.cursor = init.mycursor
+        self.domain = "https://api.theblockbeats.news/v1/"
+        self.endpoint = "open-api/open-flash?size={size}&page={page}&type={type}"
+
+    def fetch_news(self, size: int = 10, page: int = 1, news_type: str = "") -> List[Dict[str, Any]]:
+        url = self.domain + self.endpoint.format(size=size, page=page, type=news_type)
         try:
-            data = response.json().get("data").get("data")
-        except (ValueError, AttributeError) as e:
-            print(f"Error parsing JSON: {e}")
-            continue  # Skip this iteration and wait for the next one
+            response = requests.get(url)
+            response.raise_for_status()
+            return response.json().get("data", {}).get("data", [])
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Request failed: {e}")
+            return []
 
-        for news in data:
-            platform = "blockbeats"
-            id = ""
-            title = ""
-            content = ""
-            pic = ""
-            link = ""
-            url = ""
-            create_time_str = ""
-            
-            if news.get("id"):
-                id = news.get("id")
-            if news.get("title"):
-                title = news.get("title")
-            if news.get("content"):
-                content = news.get("content")
-                content = content.replace("<p>", "").replace("</p>", "").replace("<br>", "").replace("</br>", "")
-            if news.get("pic"):
-                pic = news.get("pic")
-            if news.get("link"):
-                link = news.get("link")
-            if news.get("url"):
-                url = news.get("url")
-            if news.get("create_time"):
-                create_time = news.get("create_time")
-                create_time_str = datetime.fromtimestamp(int(create_time)).strftime('%Y-%m-%d %H:%M:%S')
+    def parse_news(self, news_item: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            "platform": "blockbeats",
+            "id": news_item.get("id", ""),
+            "title": news_item.get("title", ""),
+            "content": self.clean_content(news_item.get("content", "")),
+            "pic": news_item.get("pic", ""),
+            "link": news_item.get("link", ""),
+            "url": news_item.get("url", ""),
+            "create_time": self.format_time(news_item.get("create_time", 0))
+        }
 
-            # Check if the news exists
-            sql = "SELECT * FROM news WHERE id = %s"
-            val = (id, )
-            onglory_cursor.execute(sql, val)
-            result = onglory_cursor.fetchall()
-            if len(result) == 0:
-                print(f"News ID: {id}, Title: {title}, Create Time: {create_time_str}")
-                # Insert the news
-                sql = "INSERT INTO news (platform, id, title, content, pic, link, url, create_time) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-                val = (platform, id, title, content, pic, link, url, create_time_str)
-                try:
-                    onglory_cursor.execute(sql, val)
-                    onglory_db.commit()
-                    # print(f"News {id} inserted.")
-                except Exception as e:
-                    print(f"Insert failed: {e}")
-                    continue
-            # else:
-            #     print(f"News {id} exists.")
+    @staticmethod
+    def clean_content(content: str) -> str:
+        return content.replace("<p>", "").replace("</p>", "").replace("<br>", "").replace("</br>", "")
 
-    except requests.exceptions.RequestException as e:
-        print(f"Request failed: {e}")
+    @staticmethod
+    def format_time(timestamp: int) -> str:
+        return datetime.fromtimestamp(int(timestamp)).strftime('%Y-%m-%d %H:%M:%S')
 
-    # Wait for 60 seconds before running the loop again
-    time.sleep(60)
+    def insert_news(self, news: Dict[str, Any]) -> None:
+        sql = """
+        INSERT INTO news (platform, id, title, content, pic, link, url, create_time) 
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        try:
+            self.cursor.execute(sql, tuple(news.values()))
+            self.db.commit()
+            logging.info(f"Inserted news: ID {news['id']}, Title: {news['title']}")
+        except Exception as e:
+            logging.error(f"Insert failed: {e}")
+
+    def news_exists(self, news_id: str) -> bool:
+        self.cursor.execute("SELECT 1 FROM news WHERE id = %s AND platform = %s", (news_id, "blockbeats"))
+        return bool(self.cursor.fetchone())
+    
+    def run(self, size: int = 10):
+        while True:
+            news_data = self.fetch_news(size=size)
+            for news_item in news_data:
+                parsed_news = self.parse_news(news_item)
+                if not self.news_exists(parsed_news['id']):
+                    self.insert_news(parsed_news)
+            time.sleep(60)
+
+if __name__ == "__main__":
+    size = int(sys.argv[1]) if len(sys.argv) > 1 else 10
+    api = BlockBeatsAPI()
+    api.run(size)

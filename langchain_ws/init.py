@@ -9,4 +9,4 @@ mydb = mysql.connector.connect(
     auth_plugin='mysql_native_password', 
     database=config.SQL_WP_DB
 )
-mycursor = mydb.cursor()
+mycursor = mydb.cursor(buffered=True)
