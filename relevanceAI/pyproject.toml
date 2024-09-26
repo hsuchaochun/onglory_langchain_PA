@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "relevanceai"
+version = "0.1.0"
+description = ""
+authors = ["hsuchaochun <leohsu210200@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+requests = "^2.32.3"
+markdown = "^3.7"
+pdfkit = "^1.0.0"
+markdown2 = "^2.5.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
