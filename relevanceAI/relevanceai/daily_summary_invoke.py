@@ -6,7 +6,7 @@ from datetime import datetime
 
 current_time = datetime.now()
 while 1:
-
+    
     if current_time.hour==8 and current_time.minute==5:
         
         trigger_response = requests.post(
@@ -60,4 +60,4 @@ while 1:
         body = "Please find the attached file."
         func.send_email_with_attachment(config.SMTP_SERVER, config.SSL_PORT, config.SENDER_EMAIL, config.SENDER_EMAIL_PASSWORD, config.RECIPIENT_EMAIL, config.CC_EMAILS, subject, body, attachment_path)
         
-    time.sleep(60)
+        time.sleep(60)
