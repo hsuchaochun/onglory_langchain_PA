@@ -2,12 +2,15 @@ import requests
 import config
 import time
 import func
-from datetime import datetime
+from datetime import datetime, timedelta
 
-current_time = datetime.now()
-while 1:
+last_run_date = None
+
+while True:
+    current_time = datetime.now()
     
-    if current_time.hour==8 and current_time.minute==5:
+    if current_time.hour == 8 and current_time.minute == 5 and current_time.date() != last_run_date:
+        last_run_date = current_time.date()
         
         trigger_response = requests.post(
             config.RELEVANCE_BASE_URL + "/agents/trigger", 
@@ -52,12 +55,12 @@ while 1:
         print(send_msg)
 
         # export as pdf
-        attachment_path = './daily_summary/Onglory_' + time.strftime("%Y%m%d") + "_daily_summary.pdf"
+        attachment_path = './daily_summary/Onglory_' + current_time.strftime("%Y%m%d") + "_daily_summary.pdf"
         func.markdown_to_pdf(send_msg, attachment_path)
 
         # send email
         subject = "Onglory Crypto Daily Summary"
         body = "Please find the attached file."
         func.send_email_with_attachment(config.SMTP_SERVER, config.SSL_PORT, config.SENDER_EMAIL, config.SENDER_EMAIL_PASSWORD, config.RECIPIENT_EMAIL, config.CC_EMAILS, subject, body, attachment_path)
-        
-        time.sleep(60)
+    
+    time.sleep(60)
