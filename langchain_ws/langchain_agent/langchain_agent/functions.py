@@ -4,7 +4,7 @@ from langchain_openai import ChatOpenAI
 from langchain_community.utilities import SQLDatabase
 import os
 import sys
-sys.path.append("../")
+sys.path.append("../../")
 import config
 
 def set_env_vars():
