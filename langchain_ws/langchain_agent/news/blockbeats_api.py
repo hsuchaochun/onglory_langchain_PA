@@ -55,7 +55,7 @@ class BlockBeatsAPI:
         try:
             self.cursor.execute(sql, tuple(news.values()))
             self.db.commit()
-            logging.info(f"Inserted news: ID {news['id']}, Title: {news['title']}")
+            logging.info(f"Inserted news: Create time {news['create_time']}, ID {news['id']}, Title: {news['title']}")
         except Exception as e:
             logging.error(f"Insert failed: {e}")
 
