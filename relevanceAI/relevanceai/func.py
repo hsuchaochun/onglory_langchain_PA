@@ -8,11 +8,38 @@ from email import encoders
 from datetime import datetime
 import requests
 import time
+import os
 import config
 
 def markdown_to_pdf(markdown_content, output_pdf, wkhtmltopdf_path=None, orientation='portrait'):
     # Convert markdown to HTML, ensuring it's UTF-8 encoded
     html_content = markdown2.markdown(markdown_content, extras=["tables"])
+    
+    # Add CSS for table borders
+    html_with_styles = f"""
+    <html>
+    <head>
+        <style>
+            table {{
+                width: auto; /* 表格寬度根據內容調整 */
+                table-layout: auto; /* 表格欄位寬度根據內容自動調整 */
+                border-collapse: collapse; /* 移除表格的邊界空白 */
+            }}
+            th, td {{
+                border: 1px solid black;
+                padding: 8px;
+                text-align: left;
+            }}
+            th {{
+                background-color: #f2f2f2;
+            }}
+        </style>
+    </head>
+    <body>
+        {html_content}
+    </body>
+    </html>
+    """
 
     # Set PDF options
     options = {
@@ -23,9 +50,9 @@ def markdown_to_pdf(markdown_content, output_pdf, wkhtmltopdf_path=None, orienta
     # Make sure to specify the wkhtmltopdf path, if needed
     if wkhtmltopdf_path:
         config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
-        pdfkit.from_string(html_content, output_pdf, configuration=config, options=options)
+        pdfkit.from_string(html_with_styles, output_pdf, configuration=config, options=options)
     else:
-        pdfkit.from_string(html_content, output_pdf, options=options)
+        pdfkit.from_string(html_with_styles, output_pdf, options=options)
         
 def send_email_with_attachment(smtp_server, port, sender_email, sender_password, recipient_email, cc_emails, subject, body, attachment_paths):
     # Create a multipart message
@@ -56,7 +83,9 @@ def send_email_with_attachment(smtp_server, port, sender_email, sender_password,
         server.sendmail(sender_email, recipients, msg.as_string())
         
 def generate_attachment_path(prefix):
-    return f'./daily_summary/Onglory_{datetime.now().strftime("%Y%m%d")}_{prefix}.pdf'
+    date_folder = datetime.now().strftime("%Y%m%d")
+    os.makedirs(f'./daily_summary/{date_folder}', exist_ok=True)
+    return f'./daily_summary/{date_folder}/Onglory_{date_folder}_{prefix}.pdf'
 
 def create_and_send_daily_summary():
     daily_summary_path = generate_attachment_path("daily_summary")
@@ -128,29 +157,7 @@ def create_daily_summary_pdf(attachment_path):
 def create_daily_trading_history_pdf(attachment_path):
     body = {
         "params":{
-            "objective": '''
-Fetch the **latest 5 trades** for each of the **9 strategies** from the `'onglory_trading_history'` table. 
-Sort the results by the column **'updateTime'** in **descending order** (most recent first). 
-Only show the tables with the latest 5 trades for each strategy. 
-For each strategy, display its trading history in **separate tables** with the following columns:
-
-* **symbol**
-* **price**
-* **avgPrice**
-* **origQty**
-* **executedQty**
-* **cumQuote**
-* **cummulativeQuoteQty**
-* **status**
-* **side**
-* **type**
-* **origType**
-* **time**
-* **updateTime**
-
-Ensure the trades are listed with the **most recent trade at the top** for each strategy's table.
-The output should only display the strategy name followed by its table with 5 rows for each strategy.
-'''
+            "instruction": "Get each strategies' latest 5 trades' trading history."
         },
         "project":config.RELEVANCE_PROJECT_ID
     }
