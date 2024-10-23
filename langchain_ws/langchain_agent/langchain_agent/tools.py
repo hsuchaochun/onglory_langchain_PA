@@ -47,6 +47,7 @@ class SqlSearchTool(BaseTool):
     description = """
     This tool is designed to search the SQL database and retrieve structured data based on a user's question.
     The tool accepts a user question as input, converts it into an appropriate SQL query, and retrieves the corresponding data from the database.
+    Inside this tool, the question will be processed by the GPT-3.5-turbo model to generate the SQL query, which will then be executed to fetch the data from the database.
     
     The output of this tool is structured in Chinese (traditional) and may include tables, lists, or detailed numerical data. It ensures that the result is accurate, easy to understand, and formatted properly for readability.
     
