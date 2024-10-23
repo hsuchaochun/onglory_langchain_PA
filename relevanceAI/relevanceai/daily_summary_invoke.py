@@ -1,66 +1,23 @@
-import requests
-import config
 import time
 import func
-from datetime import datetime, timedelta
+from datetime import datetime
+
+EXECUTION_HOUR = 8
+EXECUTION_MINUTE = 5
+SLEEP_INTERVAL = 60  # seconds
 
 last_run_date = None
+
+def is_execution_time(current_time, last_run):
+    return (current_time.hour == EXECUTION_HOUR and 
+            current_time.minute == EXECUTION_MINUTE and 
+            current_time.date() != last_run)
 
 while True:
     current_time = datetime.now()
     
-    if current_time.hour == 8 and current_time.minute == 5 and current_time.date() != last_run_date:
+    if is_execution_time(current_time, last_run_date):
         last_run_date = current_time.date()
-        
-        trigger_response = requests.post(
-            config.RELEVANCE_BASE_URL + "/agents/trigger", 
-            headers=config.RELEVANCE_HEADERS, 
-            json={
-                "message":{
-                    "role":"user",
-                    "content":"昨日市場彙整"
-                },
-            "agent_id":config.RELEVANCE_AGENT_ID
-            }
-        )
-
-        job = trigger_response.json()
-
-        print(job)
-
-        studio_id = job["job_info"]["studio_id"]
-        job_id = job["job_info"]["job_id"]
-
-        done = False
-        status = None
-
-        while not done:
-            response = requests.get(
-                config.RELEVANCE_BASE_URL + f"/studios/{studio_id}/async_poll/{job_id}", 
-                headers=config.RELEVANCE_HEADERS
-            )
-
-            status = response.json()
-
-            for update in status['updates']:
-                if update['type'] == "chain-success":
-                    done = True
-
-                if done:
-                    break
-
-            time.sleep(3)
-
-        send_msg = status['updates'][0]['output']['output']['answer']
-        print(send_msg)
-
-        # export as pdf
-        attachment_path = './daily_summary/Onglory_' + current_time.strftime("%Y%m%d") + "_daily_summary.pdf"
-        func.markdown_to_pdf(send_msg, attachment_path)
-
-        # send email
-        subject = "Onglory Crypto Daily Summary"
-        body = "Please find the attached file."
-        func.send_email_with_attachment(config.SMTP_SERVER, config.SSL_PORT, config.SENDER_EMAIL, config.SENDER_EMAIL_PASSWORD, config.RECIPIENT_EMAIL, config.CC_EMAILS, subject, body, attachment_path)
+        func.create_and_send_daily_summary()
     
-    time.sleep(60)
+    time.sleep(SLEEP_INTERVAL)
