@@ -152,14 +152,14 @@ def create_and_send_daily_summary():
 def news_categorize():
     body = {
         "params": {
-            "number": "1", 
+            "number": 1, 
             "interval": "HOUR"
         },
         "project": config.RELEVANCE_PROJECT_ID
     }
 
     response = requests.post(
-        config.RELEVANCE_BASE_URL + f"studios/{config.RELEVANCE_NEWS_CATEGORIZE_TOOLS_ID}/trigger_async", 
+        config.RELEVANCE_BASE_URL + f"/studios/{config.RELEVANCE_NEWS_CATEGORIZE_TOOLS_ID}/trigger_async", 
         headers=config.RELEVANCE_HEADERS, 
         json=body
     )
@@ -177,6 +177,6 @@ def news_categorize():
             break
         time.sleep(3)
 
-    print(poll_response)
+    # print(poll_response)
     
     return

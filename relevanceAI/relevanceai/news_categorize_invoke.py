@@ -3,7 +3,7 @@ import func
 from datetime import datetime
 
 EXECUTION_MINUTE = 30
-SLEEP_INTERVAL = 3600
+SLEEP_INTERVAL = 60
 
 last_run_hour = None
 
@@ -16,6 +16,7 @@ while True:
     
     if is_execution_time(current_time, last_run_hour):
         last_run_hour = current_time.hour
+        print(f"Executing at {current_time}")
         func.news_categorize()
     
     time.sleep(SLEEP_INTERVAL)
