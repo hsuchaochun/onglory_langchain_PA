@@ -49,6 +49,8 @@ def markdown_to_pdf(markdown_content, output_pdf, wkhtmltopdf_path=None, orienta
         pdfkit.from_string(html_with_styles, output_pdf, configuration=config, options=options)
     else:
         pdfkit.from_string(html_with_styles, output_pdf, options=options)
+        
+    return
 
 def send_email_with_attachment(smtp_server, port, sender_email, sender_password, recipient_email, cc_emails, subject, body, attachment_paths):
     msg = MIMEMultipart()
@@ -72,70 +74,111 @@ def send_email_with_attachment(smtp_server, port, sender_email, sender_password,
     with smtplib.SMTP_SSL(smtp_server, port) as server:
         server.login(sender_email, sender_password)
         server.sendmail(sender_email, recipients, msg.as_string())
+        
+    return
 
 def generate_attachment_path(prefix):
     date_folder = datetime.now().strftime("%Y%m%d")
     os.makedirs(f'./daily_summary/{date_folder}', exist_ok=True)
     return f'./daily_summary/{date_folder}/Onglory_{date_folder}_{prefix}.pdf'
 
-def create_pdf_report(attachment_path, agent_id, content):
-    trigger_response = requests.post(
-        config.RELEVANCE_BASE_URL + "/agents/trigger", 
-        headers=config.RELEVANCE_HEADERS, 
-        json={
-            "message":{
-                "role":"user",
-                "content": content
-            },
-            "agent_id": agent_id
-        }
+def execute_relevance_agent(relevance_base_url, relevance_headers, agent_id, content):
+    body = {
+        "message": {
+            "role": "user",
+            "content": content
+        },
+        "agent_id": agent_id
+    }
+    
+    response = requests.post(
+        relevance_base_url + f"/agents/trigger", 
+        headers=relevance_headers, 
+        json=body
     )
-
-    job = trigger_response.json()
-    print(job)
-
+    
+    job = response.json()
     studio_id = job["job_info"]["studio_id"]
     job_id = job["job_info"]["job_id"]
-
+    
     done = False
     status = None
-
     while not done:
         response = requests.get(
-            config.RELEVANCE_BASE_URL + f"/studios/{studio_id}/async_poll/{job_id}", 
-            headers=config.RELEVANCE_HEADERS
+            relevance_base_url + f"/studios/{studio_id}/async_poll/{job_id}", 
+            headers=relevance_headers
         )
-
+        
         status = response.json()
-
+        
         for update in status['updates']:
             if update['type'] == "chain-success":
                 done = True
-
-            if done:
                 break
-
+            
         time.sleep(3)
-
-    send_msg = status['updates'][0]['output']['output']['answer']
-    print(send_msg)
-
-    markdown_to_pdf(send_msg, attachment_path, orientation='landscape')
+        
+    message = status['updates'][0]['output']['output']['answer']
     
+    return job, message
+
+def execute_relevance_tools(relevance_base_url, relevance_headers, project_id, tool_id, params):
+    body = {
+        "params": params,
+        "project": project_id
+    }
+    
+    response = requests.post(
+        relevance_base_url + f"/studios/{tool_id}/trigger_async", 
+        headers=relevance_headers, 
+        json=body
+    )
+    
+    job = response.json()
+    job_id = job['job_id']
+    
+    poll_url = relevance_base_url + f"/studios/{tool_id}/async_poll/{job_id}?ending_update_only=true"
+    
+    done = False
+    while not done:
+        poll_response = requests.get(poll_url, headers=relevance_headers).json()
+        if poll_response['type'] == "complete" or poll_response['type'] == 'failed':
+            done = True
+            break
+        time.sleep(3)
+    
+    return job, poll_response
+
+def create_investment_summary_pdf_by_agent(attachment_path):
+    content = "Onglory投資彙整"
+    job, message = execute_relevance_agent(config.RELEVANCE_BASE_URL, config.RELEVANCE_HEADERS, config.RELEVANCE_INVESTMENT_SUMMARY_AGENT_ID, content)
+    markdown_to_pdf(message, attachment_path, orientation='landscape')
     return
 
-def create_investment_summary_pdf(attachment_path):
-    create_pdf_report(attachment_path, config.RELEVANCE_INVESTMENT_SUMMARY_AGENT_ID, "Onglory投資彙整")
+def create_financial_advice_pdf_by_agent(attachment_path):
+    content = "Daily market recommendations."
+    job, message = execute_relevance_agent(config.RELEVANCE_BASE_URL, config.RELEVANCE_HEADERS, config.RELEVANCE_FINANCIAL_ADVISE_AGENT_ID, content)
+    markdown_to_pdf(message, attachment_path, orientation='landscape')
+    return
 
-def create_financial_advice_pdf(attachment_path):
-    create_pdf_report(attachment_path, config.RELEVANCE_FINANCIAL_ADVISE_AGENT_ID, "Daily market recommendations.")
+def create_investment_summary_pdf_by_tool(attachment_path):
+    job, poll_response = execute_relevance_tools(config.RELEVANCE_BASE_URL, config.RELEVANCE_HEADERS, config.RELEVANCE_PROJECT_ID, config.RELEVANCE_INVESTMENT_SUMMARY_TOOLS_ID, {})
+    markdown_to_pdf(poll_response['output'], attachment_path, orientation='landscape')
+    return
+
+def create_financial_advice_pdf_by_tool(attachment_path):
+    job, poll_response = execute_relevance_tools(config.RELEVANCE_BASE_URL, config.RELEVANCE_HEADERS, config.RELEVANCE_PROJECT_ID, config.RELEVANCE_FINANCIAL_ADVISE_TOOLS_ID, {})
+    markdown_to_pdf(poll_response['output'], attachment_path, orientation='portrait')
+    return
 
 def create_and_send_daily_summary():
     investment_summary_path = generate_attachment_path("investment_summary")
     financial_advice_path = generate_attachment_path("financial_advice")
     
-    create_investment_summary_pdf(investment_summary_path)
-    create_financial_advice_pdf(financial_advice_path)
+    # create_investment_summary_pdf_by_agent(investment_summary_path)
+    # create_financial_advice_pdf_by_agent(financial_advice_path)
+    create_investment_summary_pdf_by_tool(investment_summary_path)
+    create_financial_advice_pdf_by_tool(financial_advice_path)
     
     attachment_paths = [investment_summary_path, financial_advice_path]
     
@@ -149,33 +192,13 @@ def create_and_send_daily_summary():
         subject, body, attachment_paths
     )
     
+    return
+    
 def news_categorize():
-    body = {
-        "params": {
-            "number": 1, 
-            "interval": "HOUR"
-        },
-        "project": config.RELEVANCE_PROJECT_ID
-    }
-
-    response = requests.post(
-        config.RELEVANCE_BASE_URL + f"/studios/{config.RELEVANCE_NEWS_CATEGORIZE_TOOLS_ID}/trigger_async", 
-        headers=config.RELEVANCE_HEADERS, 
-        json=body
-    )
-
-    job = response.json()
-    job_id = job['job_id']
-
-    poll_url = config.RELEVANCE_BASE_URL + f"/studios/{config.RELEVANCE_NEWS_CATEGORIZE_TOOLS_ID}/async_poll/{job_id}?ending_update_only=true"
-
-    done = False
-    while not done:
-        poll_response = requests.get(poll_url, headers=config.RELEVANCE_HEADERS).json()
-        if poll_response['type'] == "complete" or poll_response['type'] == 'failed':
-            done = True
-            break
-        time.sleep(3)
+    job, poll_response = execute_relevance_tools(config.RELEVANCE_BASE_URL, config.RELEVANCE_HEADERS, config.RELEVANCE_PROJECT_ID, config.RELEVANCE_NEWS_CATEGORIZE_TOOLS_ID, {
+        "number": 1, 
+        "interval": "HOUR"
+    })
 
     # print(poll_response)
     
