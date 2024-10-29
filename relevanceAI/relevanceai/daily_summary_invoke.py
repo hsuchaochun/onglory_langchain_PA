@@ -19,5 +19,6 @@ while True:
     if is_execution_time(current_time, last_run_date):
         last_run_date = current_time.date()
         func.create_and_send_daily_summary()
+        print(f"Daily summary successfully triggered at {current_time}")
     
     time.sleep(SLEEP_INTERVAL)

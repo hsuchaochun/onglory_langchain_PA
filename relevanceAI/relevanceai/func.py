@@ -147,7 +147,9 @@ def execute_relevance_tools(relevance_base_url, relevance_headers, project_id, t
             break
         time.sleep(3)
     
-    return job, poll_response
+    # print(poll_response)
+    
+    return job, poll_response['updates'][0]['output']['output']['answer']
 
 def create_investment_summary_pdf_by_agent(attachment_path):
     content = "Onglory投資彙整"
@@ -162,13 +164,15 @@ def create_financial_advice_pdf_by_agent(attachment_path):
     return
 
 def create_investment_summary_pdf_by_tool(attachment_path):
-    job, poll_response = execute_relevance_tools(config.RELEVANCE_BASE_URL, config.RELEVANCE_HEADERS, config.RELEVANCE_PROJECT_ID, config.RELEVANCE_INVESTMENT_SUMMARY_TOOLS_ID, {})
-    markdown_to_pdf(poll_response['output'], attachment_path, orientation='landscape')
+    job, response = execute_relevance_tools(config.RELEVANCE_BASE_URL, config.RELEVANCE_HEADERS, config.RELEVANCE_PROJECT_ID, config.RELEVANCE_INVESTMENT_SUMMARY_TOOL_ID, {})
+    # print(response)
+    markdown_to_pdf(response, attachment_path, orientation='landscape')
     return
 
 def create_financial_advice_pdf_by_tool(attachment_path):
-    job, poll_response = execute_relevance_tools(config.RELEVANCE_BASE_URL, config.RELEVANCE_HEADERS, config.RELEVANCE_PROJECT_ID, config.RELEVANCE_FINANCIAL_ADVISE_TOOLS_ID, {})
-    markdown_to_pdf(poll_response['output'], attachment_path, orientation='portrait')
+    job, response = execute_relevance_tools(config.RELEVANCE_BASE_URL, config.RELEVANCE_HEADERS, config.RELEVANCE_PROJECT_ID, config.RELEVANCE_FINANCIAL_ADVISE_TOOL_ID, {})
+    # print(response)
+    markdown_to_pdf(response, attachment_path, orientation='portrait')
     return
 
 def create_and_send_daily_summary():
@@ -195,7 +199,7 @@ def create_and_send_daily_summary():
     return
     
 def news_categorize():
-    job, poll_response = execute_relevance_tools(config.RELEVANCE_BASE_URL, config.RELEVANCE_HEADERS, config.RELEVANCE_PROJECT_ID, config.RELEVANCE_NEWS_CATEGORIZE_TOOLS_ID, {
+    job, poll_response = execute_relevance_tools(config.RELEVANCE_BASE_URL, config.RELEVANCE_HEADERS, config.RELEVANCE_PROJECT_ID, config.RELEVANCE_NEWS_CATEGORIZE_TOOL_ID, {
         "number": 1, 
         "interval": "HOUR"
     })
