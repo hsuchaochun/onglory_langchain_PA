@@ -17,6 +17,6 @@ while True:
     if is_execution_time(current_time, last_run_hour):
         last_run_hour = current_time.hour
         print(f"Executing at {current_time}")
-        func.news_categorize()
+        func.news_categorize(number=1, interval="HOUR")
     
     time.sleep(SLEEP_INTERVAL)

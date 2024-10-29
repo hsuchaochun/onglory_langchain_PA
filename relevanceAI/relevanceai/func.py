@@ -134,6 +134,9 @@ def execute_relevance_tools(relevance_base_url, relevance_headers, project_id, t
         json=body
     )
     
+    # print(f'Tool {tool_id} triggered.')
+    # print(f'Job response: {response.json()}')
+    
     job = response.json()
     job_id = job['job_id']
     
@@ -147,7 +150,7 @@ def execute_relevance_tools(relevance_base_url, relevance_headers, project_id, t
             break
         time.sleep(3)
     
-    # print(poll_response)
+    # print(f'Pool response: {poll_response}')
     
     return job, poll_response['updates'][0]['output']['output']['answer']
 
@@ -198,10 +201,10 @@ def create_and_send_daily_summary():
     
     return
     
-def news_categorize():
+def news_categorize(number=1, interval="HOUR"):
     job, poll_response = execute_relevance_tools(config.RELEVANCE_BASE_URL, config.RELEVANCE_HEADERS, config.RELEVANCE_PROJECT_ID, config.RELEVANCE_NEWS_CATEGORIZE_TOOL_ID, {
-        "number": 1, 
-        "interval": "HOUR"
+        "number": number, 
+        "interval": interval
     })
 
     # print(poll_response)
