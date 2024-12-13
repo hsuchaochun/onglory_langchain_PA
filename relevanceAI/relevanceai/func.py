@@ -152,7 +152,15 @@ def execute_relevance_tools(relevance_base_url, relevance_headers, project_id, t
     
     # print(f'Pool response: {poll_response}')
     
-    return job, poll_response['updates'][0]['output']['output']['answer']
+    if 'output' in poll_response['updates'][0]:
+        if 'transformed' in poll_response['updates'][0]['output']:
+            return job, poll_response['updates'][0]['output']['transformed']
+        elif 'answer' in poll_response['updates'][0]['output']:
+            return job, poll_response['updates'][0]['output']['answer']
+        else:
+            return job, poll_response['updates'][0]['output']
+    else:
+        return job, None
 
 def create_investment_summary_pdf_by_agent(attachment_path):
     content = "Onglory投資彙整"
