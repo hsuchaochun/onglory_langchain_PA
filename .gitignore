@@ -6,3 +6,6 @@ config.py
 *.db
 credentials.json
 token.json
+test.py
+config.py
+config/
