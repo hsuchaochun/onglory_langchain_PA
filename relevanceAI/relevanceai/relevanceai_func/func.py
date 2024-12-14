@@ -1,7 +1,6 @@
 import os
 import time
 import pdfkit
-import config
 import smtplib
 import requests
 import markdown2
@@ -10,6 +9,7 @@ from email import encoders
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
+from config import config
 
 def markdown_to_pdf(markdown_content, output_pdf, wkhtmltopdf_path=None, orientation='portrait'):
     html_content = markdown2.markdown(markdown_content, extras=["tables"])
