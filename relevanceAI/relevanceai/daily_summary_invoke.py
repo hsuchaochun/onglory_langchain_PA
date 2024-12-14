@@ -1,6 +1,6 @@
 import time
-import relevanceAI.relevanceai_func.func as func
-import relevanceAI.relevanceai_func.tg_func as tg_func
+import relevanceai_func.func as func
+import relevanceai_func.tg_func as tg_func
 from datetime import datetime
 from config import config
 
