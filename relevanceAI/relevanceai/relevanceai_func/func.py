@@ -152,15 +152,24 @@ def execute_relevance_tools(relevance_base_url, relevance_headers, project_id, t
     
     # print(f'Pool response: {poll_response}')
     
-    if 'output' in poll_response['updates'][0]:
-        if 'transformed' in poll_response['updates'][0]['output']:
-            return job, poll_response['updates'][0]['output']['transformed']
-        elif 'answer' in poll_response['updates'][0]['output']:
-            return job, poll_response['updates'][0]['output']['answer']
-        else:
-            return job, poll_response['updates'][0]['output']
-    else:
+    update = poll_response['updates'][0]
+    if 'output' not in update:
         return job, None
+    output = update['output']
+    
+    if 'transformed' in output:
+        return job, output['transformed']
+        
+    if 'answer' in output:
+        return job, output['answer']
+        
+    if 'output' in output:
+        nested_output = output['output']
+        if 'answer' in nested_output:
+            return job, nested_output['answer']
+        return job, nested_output
+        
+    return job, output
 
 def create_investment_summary_pdf_by_agent(attachment_path):
     content = "Onglory投資彙整"
@@ -176,13 +185,11 @@ def create_financial_advice_pdf_by_agent(attachment_path):
 
 def create_investment_summary_pdf_by_tool(attachment_path):
     job, response = execute_relevance_tools(config.RELEVANCE_BASE_URL, config.RELEVANCE_HEADERS, config.RELEVANCE_PROJECT_ID, config.RELEVANCE_INVESTMENT_SUMMARY_TOOL_ID, {})
-    # print(response)
     markdown_to_pdf(response, attachment_path, orientation='landscape')
     return
 
 def create_financial_advice_pdf_by_tool(attachment_path):
     job, response = execute_relevance_tools(config.RELEVANCE_BASE_URL, config.RELEVANCE_HEADERS, config.RELEVANCE_PROJECT_ID, config.RELEVANCE_FINANCIAL_ADVISE_TOOL_ID, {})
-    # print(response)
     markdown_to_pdf(response, attachment_path, orientation='portrait')
     return
 
@@ -215,6 +222,4 @@ def news_categorize(number=1, interval="HOUR"):
         "interval": interval
     })
 
-    # print(poll_response)
-    
     return
