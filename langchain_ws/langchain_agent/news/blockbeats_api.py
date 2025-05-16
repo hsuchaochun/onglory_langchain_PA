@@ -5,15 +5,13 @@ import sys
 import logging
 from typing import Dict, Any, List
 sys.path.append("../../")
-import init
+from database_operations import DatabaseOperation, insert_data, query_with_new_connection
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class BlockBeatsAPI:
     def __init__(self):
-        self.db = init.mydb
-        self.cursor = init.mycursor
         self.domain = "https://api.theblockbeats.news/v1/"
         self.endpoint = "open-api/open-flash?size={size}&page={page}&type={type}"
 
@@ -48,20 +46,34 @@ class BlockBeatsAPI:
         return datetime.fromtimestamp(int(timestamp)).strftime('%Y-%m-%d %H:%M:%S')
 
     def insert_news(self, news: Dict[str, Any]) -> None:
-        sql = """
-        INSERT INTO news (platform, id, title, content, pic, link, url, create_time) 
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        """
-        try:
-            self.cursor.execute(sql, tuple(news.values()))
-            self.db.commit()
+        operation_name = f"Insert BlockBeats news {news['id']}"
+        
+        # Convert to proper format for insert_data function
+        news_data = {
+            "platform": news['platform'],
+            "id": news['id'],
+            "title": news['title'],
+            "content": news['content'],
+            "pic": news['pic'],
+            "link": news['link'],
+            "url": news['url'],
+            "create_time": news['create_time']
+        }
+        
+        success = insert_data("news", news_data, operation_name)
+        if success:
             logging.info(f"Inserted news: Create time {news['create_time']}, ID {news['id']}, Title: {news['title']}")
-        except Exception as e:
-            logging.error(f"Insert failed: {e}")
+        else:
+            logging.error(f"Failed to insert news ID {news['id']}")
 
     def news_exists(self, news_id: str) -> bool:
-        self.cursor.execute("SELECT 1 FROM news WHERE id = %s AND platform = %s", (news_id, "blockbeats"))
-        return bool(self.cursor.fetchone())
+        operation_name = f"Check if BlockBeats news {news_id} exists"
+        result = query_with_new_connection(
+            "SELECT 1 FROM news WHERE id = %s AND platform = %s", 
+            (news_id, "blockbeats"),
+            operation_name
+        )
+        return bool(result)
     
     def run(self, size: int = 10):
         while True:

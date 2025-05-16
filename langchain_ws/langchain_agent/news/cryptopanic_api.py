@@ -6,8 +6,8 @@ import sys
 import logging
 from typing import Dict, Any, List
 sys.path.append("../../")
-import init
 import config
+from database_operations import DatabaseOperation, insert_data, query_with_new_connection
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -15,8 +15,6 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 class CryptoPanicAPI:
     def __init__(self):
         self.api_key = config.CRYPTOPANIC_API_KEY
-        self.db = init.mydb
-        self.cursor = init.mycursor
         self.base_url = "https://cryptopanic.com/api/free/v1/posts/"
         self.params = {
             "auth_token": self.api_key,
@@ -58,20 +56,34 @@ class CryptoPanicAPI:
             return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     def news_exists(self, news_id: str) -> bool:
-        self.cursor.execute("SELECT 1 FROM news WHERE id = %s AND platform = %s", (news_id, "cryptopanic"))
-        return bool(self.cursor.fetchone())
+        operation_name = f"Check if CryptoPanic news {news_id} exists"
+        result = query_with_new_connection(
+            "SELECT 1 FROM news WHERE id = %s AND platform = %s", 
+            (news_id, "cryptopanic"),
+            operation_name
+        )
+        return bool(result)
 
     def insert_news(self, news: Dict[str, Any]) -> None:
-        sql = """
-        INSERT INTO news (platform, id, title, related_coins, related_coins_symbol, link, url, create_time)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        """
-        try:
-            self.cursor.execute(sql, tuple(news.values()))
-            self.db.commit()
+        operation_name = f"Insert CryptoPanic news {news['id']}"
+        
+        # Convert to proper format for insert_data function
+        news_data = {
+            "platform": news['platform'],
+            "id": news['id'],
+            "title": news['title'],
+            "related_coins": news['related_coins'],
+            "related_coins_symbol": news['related_coins_symbol'],
+            "link": news['link'],
+            "url": news['url'],
+            "create_time": news['create_time']
+        }
+        
+        success = insert_data("news", news_data, operation_name)
+        if success:
             logging.info(f"Inserted news: Create time {news['create_time']}, ID {news['id']}, Title: {news['title']}")
-        except Exception as e:
-            logging.error(f"Insert failed: {e}")
+        else:
+            logging.error(f"Failed to insert news ID {news['id']}")
 
     def run(self, page_size: int):
         while True:
