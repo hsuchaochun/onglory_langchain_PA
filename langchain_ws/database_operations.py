@@ -25,28 +25,44 @@ class DatabaseOperation:
         self.operation_name = operation_name
         
     def __enter__(self):
-        """Set up the database connection and cursor."""
-        try:
-            # Wait a small amount to ensure any previous operations finish
-            time.sleep(0.2)
-            
-            # Create a fresh connection
-            self.connection = mysql.connector.connect(
-                host=config.SQL_HOST,
-                user=config.SQL_USR,
-                password=config.SQL_PWD,
-                database=config.SQL_WP_DB,
-                auth_plugin='mysql_native_password'
-            )
-            # Use buffered cursor to ensure results are always consumed
-            self.cursor = self.connection.cursor(buffered=True)
-            logger.debug(f"Created new connection for {self.operation_name}")
-            return self
-        except Exception as e:
-            logger.error(f"Failed to create database connection for {self.operation_name}: {e}")
-            # Clean up partial resources if needed
-            self._cleanup()
-            raise
+        """Set up the database connection and cursor with retry logic."""
+        max_retries = 3
+        retry_delay = 1.0  # 初始重試延遲（秒）
+        
+        for attempt in range(1, max_retries + 1):
+            try:
+                # Wait a small amount to ensure any previous operations finish
+                time.sleep(0.2)
+                
+                # Create a fresh connection
+                self.connection = mysql.connector.connect(
+                    host=config.SQL_HOST,
+                    user=config.SQL_USR,
+                    password=config.SQL_PWD,
+                    database=config.SQL_WP_DB,
+                    auth_plugin='mysql_native_password',
+                    connect_timeout=10  # 增加連接超時時間
+                )
+                # Use buffered cursor to ensure results are always consumed
+                self.cursor = self.connection.cursor(buffered=True)
+                logger.debug(f"Created new connection for {self.operation_name} (attempt {attempt})")
+                return self
+            except mysql.connector.Error as e:
+                if attempt < max_retries:
+                    logger.warning(f"Connection attempt {attempt} failed for {self.operation_name}: {e}. Retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+                    # 指數退避算法：每次失敗後增加等待時間
+                    retry_delay *= 2
+                else:
+                    logger.error(f"Failed to create database connection for {self.operation_name} after {max_retries} attempts: {e}")
+                    # Clean up partial resources if needed
+                    self._cleanup()
+                    raise
+            except Exception as e:
+                logger.error(f"Unexpected error creating database connection for {self.operation_name}: {e}")
+                # Clean up partial resources if needed
+                self._cleanup()
+                raise
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Clean up resources and handle any errors."""
