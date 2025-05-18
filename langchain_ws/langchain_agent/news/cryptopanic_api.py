@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 class CryptoPanicAPI:
     def __init__(self):
         self.api_key = config.CRYPTOPANIC_API_KEY
-        self.base_url = "https://cryptopanic.com/api/free/v1/posts/"
+        self.base_url = "https://cryptopanic.com/api/v1/posts/"
         self.params = {
             "auth_token": self.api_key,
             "kind": "news",
